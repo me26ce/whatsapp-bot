@@ -11,24 +11,32 @@ GROQ_API = os.environ.get("GROQ_API_KEY")
 def whatsapp_reply():
     msg = request.values.get('Body', '')
 
-    response = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {GROQ_API}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "llama3-8b-8192",
-            "messages": [{"role": "user", "content": msg}]
-        }
-    )
-
     try:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_API}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama3-8b-8192",
+                "messages": [
+                    {"role": "user", "content": msg}
+                ]
+            },
+            timeout=20
+        )
+
         data = response.json()
-        reply = data['choices'][0]['message']['content']
+
+        # 🔍 DEBUG için ham response kontrolü
+        if response.status_code != 200:
+            reply = f"API HATA: {data}"
+        else:
+            reply = data['choices'][0]['message']['content']
+
     except Exception as e:
-        reply = f"HATA: {str(e)}"    try:
-            reply = response.json()['choices'][0]['message']['content']
+        reply = f"SYSTEM HATA: {str(e)}"
 
     twilio_resp = MessagingResponse()
     twilio_resp.message(reply)
