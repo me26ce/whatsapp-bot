@@ -11,8 +11,7 @@ GROQ_API = os.environ.get("GROQ_API_KEY")
 memory = {}
 
 SYSTEM_PROMPT = (
-    "Sen Türkçe konuşan bir WhatsApp kişisel asistanısın. "
-    "Kısa, net ve doğal cevap ver. Gereksiz İngilizce kullanma."
+   "Sen profesyonel bir Türkçe kişisel asistansın. İnsan gibi konuş, kısa ama zeki cevap ver, gereksiz açıklama yapma."
 )
 
 @app.route("/whatsapp", methods=['POST'])
@@ -36,7 +35,7 @@ def whatsapp_reply():
             "Content-Type": "application/json"
         },
         json={
-            "model": "llama-3.1-8b-instant",
+            "model": "llama-3.1-70b-versatile",
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT + f"\nSon konuşmalar: {history}"},
                 {"role": "user", "content": msg}
