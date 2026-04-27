@@ -7,36 +7,49 @@ app = Flask(__name__)
 
 GROQ_API = os.environ.get("GROQ_API_KEY")
 
+# 🧠 BASİT HAFIZA (RAM)
+memory = {}
+
+SYSTEM_PROMPT = (
+    "Sen Türkçe konuşan bir WhatsApp kişisel asistanısın. "
+    "Kısa, net ve doğal cevap ver. Gereksiz İngilizce kullanma."
+)
+
 @app.route("/whatsapp", methods=['POST'])
 def whatsapp_reply():
     msg = request.values.get('Body', '')
+    user_id = request.values.get('From', '')
+
+    # 🧠 memory başlat
+    if user_id not in memory:
+        memory[user_id] = []
+
+    # son mesajları tut
+    memory[user_id].append(msg)
+    history = memory[user_id][-5:]  # son 5 mesaj
+
+    # Groq API çağrısı
+    response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {GROQ_API}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "llama-3.1-8b-instant",
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT + f"\nSon konuşmalar: {history}"},
+                {"role": "user", "content": msg}
+            ]
+        },
+        timeout=20
+    )
 
     try:
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {GROQ_API}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "llama-3.1-8b-instant",
-                "messages": [
-                    {"role": "user", "content": msg}
-                ]
-            },
-            timeout=20
-        )
-
         data = response.json()
-
-        # 🔍 DEBUG için ham response kontrolü
-        if response.status_code != 200:
-            reply = f"API HATA: {data}"
-        else:
-            reply = data['choices'][0]['message']['content']
-
-    except Exception as e:
-        reply = f"SYSTEM HATA: {str(e)}"
+        reply = data['choices'][0]['message']['content']
+    except:
+        reply = "Şu an cevap veremiyorum."
 
     twilio_resp = MessagingResponse()
     twilio_resp.message(reply)
