@@ -5,29 +5,26 @@ from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)
 
-HF_API = os.environ.get("HF_API_KEY")
+GROQ_API = os.environ.get("GROQ_API_KEY")
 
 @app.route("/whatsapp", methods=['POST'])
 def whatsapp_reply():
     msg = request.values.get('Body', '')
 
     response = requests.post(
-        "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
-        headers={"Authorization": f"Bearer {HF_API}"},
-        json={"inputs": msg}
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {GROQ_API}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "llama3-8b-8192",
+            "messages": [{"role": "user", "content": msg}]
+        }
     )
 
     try:
-        data = response.json()
-
-        # güvenli parse
-        if isinstance(data, list) and "generated_text" in data[0]:
-            reply = data[0]["generated_text"]
-        elif isinstance(data, dict) and "error" in data:
-            reply = "Model yükleniyor, tekrar dene."
-        else:
-            reply = str(data)
-
+        reply = response.json()['choices'][0]['message']['content']
     except:
         reply = "Şu an cevap veremiyorum."
 
