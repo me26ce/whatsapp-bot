@@ -24,9 +24,11 @@ def whatsapp_reply():
     )
 
     try:
-        reply = response.json()['choices'][0]['message']['content']
-    except:
-        reply = "Şu an cevap veremiyorum."
+        data = response.json()
+        reply = data['choices'][0]['message']['content']
+    except Exception as e:
+        reply = f"HATA: {str(e)}"    try:
+            reply = response.json()['choices'][0]['message']['content']
 
     twilio_resp = MessagingResponse()
     twilio_resp.message(reply)
