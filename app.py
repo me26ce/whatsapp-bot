@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 
-client = OpenAI(api_key="sk-xxxxx")
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 @app.route("/whatsapp", methods=['POST'])
 def whatsapp_reply():
     incoming_msg = request.values.get('Body', '')
