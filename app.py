@@ -36,7 +36,12 @@ def whatsapp_reply():
         reply = data["candidates"][0]["content"]["parts"][0]["text"]
 
     except Exception as e:
-        reply = f"Hata oluştu: {str(e)}"
+        if "error" in data:
+    reply = f"API ERROR: {data['error']['message']}"
+elif "candidates" in data:
+    reply = data["candidates"][0]["content"]["parts"][0]["text"]
+else:
+    reply = f"Bilinmeyen response: {data}"
 
     twilio_resp = MessagingResponse()
     twilio_resp.message(reply)
