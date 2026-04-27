@@ -5,50 +5,38 @@ from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)
 
-GROQ_API = os.environ.get("GROQ_API_KEY")
-
-# 🧠 BASİT HAFIZA (RAM)
-memory = {}
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 SYSTEM_PROMPT = (
-   "Sen profesyonel bir Türkçe kişisel asistansın. İnsan gibi konuş, kısa ama zeki cevap ver, gereksiz açıklama yapma."
+    "Sen Türkçe konuşan bir WhatsApp kişisel asistanısın. "
+    "Kısa, doğal ve anlaşılır cevap ver. Gereksiz İngilizce kullanma."
 )
 
 @app.route("/whatsapp", methods=['POST'])
 def whatsapp_reply():
     msg = request.values.get('Body', '')
-    user_id = request.values.get('From', '')
 
-    # 🧠 memory başlat
-    if user_id not in memory:
-        memory[user_id] = []
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
-    # son mesajları tut
-    memory[user_id].append(msg)
-    history = memory[user_id][-5:]  # son 5 mesaj
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": SYSTEM_PROMPT + "\nKullanıcı: " + msg}
+                ]
+            }
+        ]
+    }
 
-    # Groq API çağrısı
-    response = requests.post(
-        "https://api.groq.com/openai/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {GROQ_API}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "llama-3.1-8b-instant",
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT + f"\nSon konuşmalar: {history}"},
-                {"role": "user", "content": msg}
-            ]
-        },
-        timeout=20
-    )
+    response = requests.post(url, json=payload)
 
     try:
         data = response.json()
-        reply = data['choices'][0]['message']['content']
-    except:
-        reply = "Şu an cevap veremiyorum."
+
+        reply = data["candidates"][0]["content"]["parts"][0]["text"]
+
+    except Exception as e:
+        reply = f"Hata oluştu: {str(e)}"
 
     twilio_resp = MessagingResponse()
     twilio_resp.message(reply)
