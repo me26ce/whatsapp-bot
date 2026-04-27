@@ -35,7 +35,7 @@ def whatsapp_reply():
             "Content-Type": "application/json"
         },
         json={
-            "model": "llama-3.1-70b-versatile",
+            "model": "llama-3.1-70b-instant",
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT + f"\nSon konuşmalar: {history}"},
                 {"role": "user", "content": msg}
