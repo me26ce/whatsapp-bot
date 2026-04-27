@@ -1,21 +1,22 @@
 from flask import Flask, request
 import os
-import google.generativeai as genai
+from google import genai
 from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)
 
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 @app.route("/whatsapp", methods=['POST'])
 def whatsapp_reply():
     incoming_msg = request.values.get('Body', '')
 
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    response = client.models.generate_content(
+        model="gemini-1.5-flash",
+        contents=incoming_msg
+    )
 
-    response = model.generate_content(incoming_msg)
-
-    reply = response.text if response.text else "Boş cevap geldi"
+    reply = response.text
 
     twilio_resp = MessagingResponse()
     twilio_resp.message(reply)
