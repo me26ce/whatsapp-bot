@@ -6,14 +6,16 @@ from twilio.twiml.messaging_response import MessagingResponse
 app = Flask(__name__)
 
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-mmodel = genai.GenerativeModel("gemini-1.5-flash-latest")
 
 @app.route("/whatsapp", methods=['POST'])
 def whatsapp_reply():
     incoming_msg = request.values.get('Body', '')
 
+    model = genai.GenerativeModel("gemini-1.5-flash")
+
     response = model.generate_content(incoming_msg)
-    reply = response.text
+
+    reply = response.text if response.text else "Boş cevap geldi"
 
     twilio_resp = MessagingResponse()
     twilio_resp.message(reply)
